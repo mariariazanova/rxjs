@@ -10,17 +10,17 @@ export class AuthSettingsGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.httpClient
-      .get(`${this.apiHostUrl}maintenance-service/appconfigurations/${this.applicationBuildName}`, {
+      .get(`${this.apiHostUrl}maintenance-service/appconfigurations/${this.applicationBuildName}`, {   //отправляется запрос для получения данных
         headers: { [ignoreAuthorizationHeader]: 'true' },
       })
-      .pipe(
-        tap((appSettings: AppSettings) => {
-          this.authSettingsService.authSettings.next(appSettings);
+      .pipe(                                                                                           //применяется метод для объединения операторов
+        tap((appSettings: AppSettings) => {                                                            //оператор позволяет осуществить побочные действия, не затрагивая поток
+          this.authSettingsService.authSettings.next(appSettings);                                     //сигнал о том, что поток authSettings испустил новое значение appSettings
         }),
-        switchMap(() => {
-          const guards = <Token[]>route.data.dependentGuards;
+        switchMap(() => {                                                                              //переключается на новый поток, подписывается на него, отписывается от старого
+          const guards = <Token[]>route.data.dependentGuards;                                          //получение зависимых гвардов в зависимости от рута
 
-          return combineLatest(
+          return combineLatest(                                                                        //получает последние значения из последовательности при испускании значений
             guards.map(internalGuard => {
               const guard = this.injector.get(internalGuard);
               const result = guard.canActivate(route, state);
@@ -33,7 +33,7 @@ export class AuthSettingsGuard implements CanActivate {
                 return of(result);
               }
             }),
-          ).pipe(map(params => params.every(value => Boolean(value))));
+          ).pipe(map(params => params.every(value => Boolean(value))));                                 //проходит по массиву значений и заменяет все их параметры на их булевы значения
         }),
       );
   }
